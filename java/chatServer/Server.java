@@ -79,9 +79,7 @@ public class Server{
     }
 
     public void write(Message message) throws IOException{
-      System.out.println("Inside ClientProxy.write message.getClientName ='" + message.getClientName() + "' name= '" + name + "'");
       if(!message.getClientName().equals(name)){
-        System.out.println("writing....");
         out.writeObject(message);
       }
     }
