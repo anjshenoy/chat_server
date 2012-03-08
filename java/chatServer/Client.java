@@ -56,10 +56,9 @@ public class Client{
     String m;
     ObjectOutputStream oos = new ObjectOutputStream(server.getOutputStream());
     oos.flush();
+    oos.writeObject(msg);
     while((m = in.readLine())!=null){
-      System.out.println(m);
       msg = new Message(name, m);
-      System.out.println(msg);
       oos.writeObject(msg);
     }
   }

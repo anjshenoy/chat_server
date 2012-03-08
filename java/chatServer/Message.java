@@ -31,14 +31,18 @@ class Message implements Serializable{
    }
 
    public boolean signingIn(){
-     return (this.body == signInText);
+     return (this.body.equals(signInText));
    }
 
    public boolean signingOut(){
-     return (this.body == signOutText);
+     return (this.body.equals(signOutText));
    }
 
    public String toString(){
-     return this.client + "says: " + this.body;
+     return this.client + ": " + this.body;
+   }
+
+   public String getClientName(){
+      return this.client;
    }
 }

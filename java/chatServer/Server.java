@@ -25,7 +25,7 @@ public class Server{
 
   public void start(){
     System.out.println("Starting the server");
-    while(true) {
+    while(true){
       try{
         Socket client = serverSocket.accept();
         ClientProxy cp = new ClientProxy(client);
@@ -40,31 +40,6 @@ public class Server{
   public static void main(String[] args) throws Exception{
     Server server = new Server(39020);
     server.start();
-  }
-
-  private class ClientConnectionHandler implements Runnable{
-    private Socket client;
-    private ObjectInputStream input;
-
-    public ClientConnectionHandler(Socket client) throws IOException{
-      this.client = client;
-      this.input = new ObjectInputStream(client.getInputStream());
-    }
-
-    public void run(){
-      System.out.println("Got that client!!");
-      Message m;
-      try{
-        while((m = (Message) input.readObject()) != null){
-          System.out.println(m);
-          messages.add(m);
-        }
-      }catch(IOException ioe){
-          ioe.printStackTrace();
-      }catch(ClassNotFoundException cne){
-        cne.printStackTrace();
-      }
-    }
   }
 
   private class MessageDispatcher implements Runnable{
@@ -89,11 +64,13 @@ public class Server{
   }
 
   private class ClientProxy implements Runnable{
+    private String name;
     private ObjectOutputStream out;
     private ObjectInputStream in;
     private Socket socket;
 
     public ClientProxy(Socket socket) throws IOException {
+      this.name = "";
       this.socket = socket;
       this.out = new ObjectOutputStream(socket.getOutputStream());
       this.out.flush();
@@ -102,7 +79,11 @@ public class Server{
     }
 
     public void write(Message message) throws IOException{
-      out.writeObject(message);
+      System.out.println("Inside ClientProxy.write message.getClientName ='" + message.getClientName() + "' name= '" + name + "'");
+      if(!message.getClientName().equals(name)){
+        System.out.println("writing....");
+        out.writeObject(message);
+      }
     }
 
     public void run(){
@@ -111,6 +92,10 @@ public class Server{
       try{
         while((m = (Message) in.readObject()) != null){
           System.out.println(m);
+          if(m.signingIn()){
+            System.out.println("Client name = " + m.getClientName());
+            name = m.getClientName();
+          }
           messages.add(m);
         }
       }catch(IOException ioe){
