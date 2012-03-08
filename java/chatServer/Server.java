@@ -14,13 +14,13 @@ import java.util.ArrayList;
 public class Server{
   private ServerSocket serverSocket;
   private ArrayBlockingQueue<Message> messages;
-  private ArrayList<Socket> clients;
+  private ArrayList<ClientProxy> clients;
 
   public Server(int serverPort) throws IOException{
     serverSocket = new ServerSocket(serverPort);
     messages = new ArrayBlockingQueue<Message>(10);
-    clients = new ArrayList<Socket>(10);
-    (new Thread(new ClientOutputStreamHandler())).start();
+    clients = new ArrayList<ClientProxy>(10);
+    (new Thread(new MessageDispatcher())).start();
   }
 
   public void start(){
@@ -28,20 +28,9 @@ public class Server{
     while(true) {
       try{
         Socket client = serverSocket.accept();
-        clients.add(client);
-        (new Thread(new ClientConnectionHandler(client))).start();
-      }catch(IOException ioe){
-        ioe.printStackTrace();
-      }
-    }
-  }
-
-  public void publish(Message message){
-    System.out.println("Inside publish message = " + message);
-    for (int j=0; j < clients.size(); j++){
-      try{
-        Socket client = clients.get(j);
-        new ObjectOutputStream(client.getOutputStream()).writeObject(message);
+        ClientProxy cp = new ClientProxy(client);
+        clients.add(cp);
+        (new Thread(cp)).start();
       }catch(IOException ioe){
         ioe.printStackTrace();
       }
@@ -78,18 +67,58 @@ public class Server{
     }
   }
 
-  private class ClientOutputStreamHandler implements Runnable{
-
+  private class MessageDispatcher implements Runnable{
     public void run(){
       while(true){
         Message message;
         try{
           message = messages.take();
-          publish(message);
+          System.out.println("Inside publish message = " + message);
+          for(ClientProxy client : clients) {
+            try{
+              client.write(message);
+            }catch(IOException ioe){
+              ioe.printStackTrace();
+            }
+          }
         }catch(InterruptedException ie){
           ie.printStackTrace(); 
         }
       }
     }
+  }
+
+  private class ClientProxy implements Runnable{
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
+    private Socket socket;
+
+    public ClientProxy(Socket socket) throws IOException {
+      this.socket = socket;
+      this.out = new ObjectOutputStream(socket.getOutputStream());
+      this.out.flush();
+      this.in = new ObjectInputStream(socket.getInputStream());
+      System.out.println("Initialized ClientProxy");
+    }
+
+    public void write(Message message) throws IOException{
+      out.writeObject(message);
+    }
+
+    public void run(){
+      System.out.println("Waiting on input");
+      Message m;
+      try{
+        while((m = (Message) in.readObject()) != null){
+          System.out.println(m);
+          messages.add(m);
+        }
+      }catch(IOException ioe){
+          ioe.printStackTrace();
+      }catch(ClassNotFoundException cne){
+        cne.printStackTrace();
+      }
+    }
+
   }
 }

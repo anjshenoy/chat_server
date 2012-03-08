@@ -10,6 +10,33 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class Client{
+  private class ServerConnectionHandler implements Runnable{
+    private Socket server;
+    private BufferedReader input;
+    private ObjectInputStream ois;
+
+    public ServerConnectionHandler(Socket server) throws IOException{
+      System.out.println("INSIDE constructor");
+      this.server = server;
+      System.out.println("set up server");
+      this.ois = new ObjectInputStream(server.getInputStream());
+      System.out.println("Initialized ServerConnectionHandler!");
+    }
+
+    public void run(){
+      System.out.println("Inside run");
+      Message m;
+      try{
+        while((m = (Message) ois.readObject()) != null){
+          System.out.println(m.toString());
+        }
+      }catch(IOException ioe){
+        ioe.printStackTrace();
+      }catch(ClassNotFoundException cne){
+        cne.printStackTrace();
+      }
+    }
+  }
 
   private Socket server;
   private String name;
@@ -19,7 +46,7 @@ public class Client{
   public Client(String name, int port) throws IOException{
     this.name = name;
     this.server = new Socket("localhost", port);
-    new Thread(new ServerConnectionHandler(this.server)).start();
+    (new Thread(new ServerConnectionHandler(this.server), name)).start();
   }
 
   public void start() throws IOException{
@@ -28,6 +55,7 @@ public class Client{
     Message msg = Message.signIn(name);
     String m;
     ObjectOutputStream oos = new ObjectOutputStream(server.getOutputStream());
+    oos.flush();
     while((m = in.readLine())!=null){
       System.out.println(m);
       msg = new Message(name, m);
@@ -47,28 +75,4 @@ public class Client{
     }
   }
 
-  private class ServerConnectionHandler implements Runnable{
-    private Socket server;
-    private BufferedReader input;
-    private ObjectInputStream ois;
-
-    public ServerConnectionHandler(Socket server) throws IOException{
-      this.server = server;
-      this.ois = new ObjectInputStream(server.getInputStream());
-    }
-
-    public void run(){
-      System.out.println("Inside run");
-      Message m;
-      try{
-        while((m = (Message) ois.readObject()) != null){
-          System.out.println(m.toString());
-        }
-      }catch(IOException ioe){
-        ioe.printStackTrace();
-      }catch(ClassNotFoundException cne){
-        cne.printStackTrace();
-      }
-    }
-  }
 }
