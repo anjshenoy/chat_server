@@ -8,6 +8,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.ArrayList;
 
@@ -48,7 +49,6 @@ public class Server{
         Message message;
         try{
           message = messages.take();
-          System.out.println("Inside publish message = " + message);
           for(ClientProxy client : clients) {
             try{
               client.write(message);
@@ -75,26 +75,36 @@ public class Server{
       this.out = new ObjectOutputStream(socket.getOutputStream());
       this.out.flush();
       this.in = new ObjectInputStream(socket.getInputStream());
-      System.out.println("Initialized ClientProxy");
     }
 
     public void write(Message message) throws IOException{
-      if(!message.getClientName().equals(name)){
-        out.writeObject(message);
+      if(!message.getClientName().equals(name)) {
+       synchronized(out) {
+         if(out != null){
+           out.writeObject(message);
+         }
+       }
       }
     }
 
     public void run(){
-      System.out.println("Waiting on input");
       Message m;
       try{
-        while((m = (Message) in.readObject()) != null){
+        while(!(m = (Message) in.readObject()).signingOut()){
           System.out.println(m);
           if(m.signingIn()){
-            System.out.println("Client name = " + m.getClientName());
             name = m.getClientName();
           }
           messages.add(m);
+        }
+        try{
+          clients.remove(this);
+          synchronized(out){
+            out = null;
+          }
+          socket.close();
+        }catch(SocketException se){
+          se.printStackTrace();
         }
       }catch(IOException ioe){
           ioe.printStackTrace();

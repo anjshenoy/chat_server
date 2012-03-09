@@ -16,19 +16,15 @@ public class Client{
     private ObjectInputStream ois;
 
     public ServerConnectionHandler(Socket server) throws IOException{
-      System.out.println("INSIDE constructor");
       this.server = server;
-      System.out.println("set up server");
       this.ois = new ObjectInputStream(server.getInputStream());
-      System.out.println("Initialized ServerConnectionHandler!");
     }
 
     public void run(){
-      System.out.println("Inside run");
       Message m;
       try{
         while((m = (Message) ois.readObject()) != null){
-          System.out.println(m.toString());
+          System.out.println(m);
         }
       }catch(IOException ioe){
         ioe.printStackTrace();
@@ -50,24 +46,23 @@ public class Client{
   }
 
   public void start() throws IOException{
-    System.out.println("Inside start");
     BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
     Message msg = Message.signIn(name);
     String m;
     ObjectOutputStream oos = new ObjectOutputStream(server.getOutputStream());
     oos.flush();
     oos.writeObject(msg);
-    while((m = in.readLine())!=null){
+    while((m = in.readLine()) != Message.signOutText){
       msg = new Message(name, m);
       oos.writeObject(msg);
     }
+    oos.writeObject(Message.signOut(name));
+    oos.close();
   }
 
   public static void main(String[] args){
-    System.out.println(args[0]);
     try{
       Client c = new Client(args[0], 39020);
-      System.out.println(c.name);
       c.start();
     }catch(IOException ioe){
       ioe.printStackTrace();
