@@ -6,7 +6,7 @@ class Message implements Serializable{
    private String client;
    private String body;
    private static final String signInText = "Signing In";
-   public static final String signOutText = "Bye";
+   public static final String signOutText = "bye";
 
    public Message(String client){
      this.client = client;

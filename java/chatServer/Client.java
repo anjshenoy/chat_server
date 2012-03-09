@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.DataOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.EOFException;
 import java.net.Socket;
 
 public class Client{
@@ -26,10 +27,13 @@ public class Client{
         while((m = (Message) ois.readObject()) != null){
           System.out.println(m);
         }
-      }catch(IOException ioe){
-        ioe.printStackTrace();
       }catch(ClassNotFoundException cne){
         cne.printStackTrace();
+      }catch(EOFException eofe){
+        System.out.println("You are now logged out");
+        System.exit(0);
+      }catch(IOException ioe){
+        ioe.printStackTrace();
       }
     }
   }
@@ -57,7 +61,7 @@ public class Client{
       oos.writeObject(msg);
     }
     oos.writeObject(Message.signOut(name));
-    oos.close();
+    server.close();
   }
 
   public static void main(String[] args){

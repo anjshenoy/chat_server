@@ -90,12 +90,15 @@ public class Server{
     public void run(){
       Message m;
       try{
-        while(!(m = (Message) in.readObject()).signingOut()){
+        while((m = (Message) in.readObject()) != null){
           System.out.println(m);
           if(m.signingIn()){
             name = m.getClientName();
           }
           messages.add(m);
+          if(m.signingOut()){
+            break;
+          }
         }
         try{
           clients.remove(this);
