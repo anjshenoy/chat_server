@@ -29,4 +29,3 @@ end
 
 #client = Client.new("test")
 #client.start
-#client.listen!

@@ -1,10 +1,11 @@
 require 'socket'
+require 'thread'
 require './message'
 
 class Server
   def initialize
     @server = TCPServer.new('localhost', 39090)
-    @messages = []
+    @messages = Queue.new
     @clients = {}
   end
 
