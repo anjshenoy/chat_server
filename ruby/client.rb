@@ -18,7 +18,7 @@ class Client
   def start
     puts "here we go"
     @server.puts(Message.signin_message(self.name).to_json)
-    until((x = gets) == "bye\n") do
+    until((x = $stdin.gets) == "bye\n") do
       m = Message.new(self.name, x)
       @server.puts(m.to_json)
     end
@@ -27,5 +27,4 @@ class Client
 
 end
 
-#client = Client.new("test")
-#client.start
+Client.new(ARGV[0]).start
